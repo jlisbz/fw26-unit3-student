@@ -1,18 +1,38 @@
+"""
+Group Scenario Implementation Module [GROUP TODO].
+
+Instructions:
+1. Update `SCENARIO_NAME` with your group's assigned track title.
+2. Implement `inject_scenario_event()` to simulate your assigned disruption or workload spike.
+3. Implement `compute_q_and_bounds()` to calculate the 4x6 Qualification Matrix Q and
+   dynamic role capacity bounds (L_min, L_max) from live telemetry without hardcoding
+   agent-to-role assignments.
+"""
 import math
 from typing import Dict, List, Tuple
 import numpy as np
 from core.telemetry_bus import AGENTS, ROLES, AgentTelemetry, get_baseline_state
 
-SCENARIO_NAME = "Track 1: Critical Energy Evacuation & Handoff"
+SCENARIO_NAME = "Track X: <Replace with Your Assigned Track Name>"
 CRITICAL_BATTERY_THRESHOLD = 20.0
 RSSI_PARTITION_THRESHOLD = -85.0
 
 def inject_scenario_event() -> Tuple[Dict[str, AgentTelemetry], int]:
     """
-    Simulate critical battery depletion on robot-a0 (12.0% < 20.0% safety threshold).
+    Simulate your group's assigned environmental disruption or workload spike.
+
+    Track Reference:
+      - Track 1 (Energy Evacuation): Set robot-a0 battery = 12.0 (< 20.0% cutoff)
+      - Track 2 (Sensor Failure): Set robot-a1 lidar_ok = False
+      - Track 3 (Communication Decay): Set robot-a0 distance_m = 120.0, rssi_dbm = -91.0;
+        position robot-a1 at midpoint distance_m = 60.0
+      - Track 4 (Flash Demand Spike): Set pending_jobs = 4
     """
     telemetry, pending_jobs = get_baseline_state()
-    telemetry["robot-a0"].battery = 12.0
+
+    # TODO (Group Implementation):
+    # Modify `telemetry` or `pending_jobs` for your group's assigned track.
+
     return telemetry, pending_jobs
 
 
@@ -21,16 +41,23 @@ def compute_q_and_bounds(
     pending_jobs: int,
 ) -> Tuple[np.ndarray, List[int], List[int]]:
     """
-    Computes Qualification Matrix Q and role capacity bounds (L_min, L_max).
-    Enforces mandatory charging evacuation when battery < 20.0% while optimizing
-    field role assignments across healthy agents.
+    Compute the 4x6 Qualification Matrix Q and role capacity vectors (L_min, L_max).
+    Must produce valid optimal assignments for both Phase 1 (Baseline) and Phase 2 (Disrupted).
+
+    Roles index order (ROLES):
+      0: lead-scout
+      1: precision-mapper
+      2: cargo-carrier
+      3: signal-relay
+      4: charging
+      5: standby
     """
     m, n = len(AGENTS), len(ROLES)
     Q = np.zeros((m, n))
 
     min_rssi = min(t.rssi_dbm for t in telemetry.values())
     max_dist = max(t.distance_m for t in telemetry.values())
-    relay_needed = 1 if min_rssi < -85.0 else 0
+    relay_needed = 1 if min_rssi < RSSI_PARTITION_THRESHOLD else 0
     midpoint_dist = max_dist / 2.0
 
     for i, name in enumerate(AGENTS):
