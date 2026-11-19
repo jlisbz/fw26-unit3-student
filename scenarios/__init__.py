@@ -1,0 +1,3 @@
+"""
+Group Scenario Implementation Package.
+"""
